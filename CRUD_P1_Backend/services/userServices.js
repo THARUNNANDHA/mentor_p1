@@ -47,12 +47,36 @@ class UserService {
     async updateUser(id, data) {
         this.validatePayload(data)
         const exist = await User.findOne({ where: { email: data.email } });
+        if (!exist) {
+            throw new Error('User not found')
+        }
+
+        var currMetadata = exist.student_meta_data || {}
+        if (data.student_meta_data) {
+            currMetadata = { ...currMetadata, ...data.student_meta_data }
+        }
+
         if (exist) {
-            await exist.update({ userName: data.userName, password: data.password, phNumber: data.phNumber });
+            // await exist.update({ userName: data.userName, password: data.password, phNumber: data.phNumber, student_meta_data: currMetadata });
+            await exist.update({ userName: data.userName, password: data.password, phNumber: data.phNumber, student_meta_data: data.student_meta_data });
             await exist.save();
             return exist;
         }
-        throw new Error('User not found')
+
+    }
+
+    async updateUserMeta(id, data) {
+        const exist = await User.findOne({ where: { id: id } });
+        if (!exist) {
+            throw new Error("User not found")
+        }
+        var currMetadata = exist.student_meta_data || {}
+        if (data) {
+            currMetadata = { ...currMetadata, ...data }
+        }
+        await exist.update({ student_meta_data: currMetadata });
+        await exist.save();
+        return exist;
     }
 }
 module.exports = new UserService()

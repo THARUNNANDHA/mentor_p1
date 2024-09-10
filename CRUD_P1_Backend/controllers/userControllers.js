@@ -7,7 +7,7 @@ class UserController {
             res.status(200).json(user)
         }
         catch (err) {
-            res.status(400).json({ 'message': err.message })
+            res.status(400).json({ 'error': err.message })
         }
     }
     async updateUser(req, res) {
@@ -16,16 +16,16 @@ class UserController {
             res.status(200).json(user)
         }
         catch (err) {
-            res.status(400).json({ 'message': err.message })
+            res.status(400).json({ 'error': err.message })
         }
     }
     async deletUser(req, res) {
         try {
             await userService.deleteUser(req.body.id)
-            res.status(200).json({ 'message': 'Deleted Success' })
+            res.status(200).json({ 'error': 'Deleted Success' })
         }
         catch (err) {
-            res.status(400).json({ 'message': err.message })
+            res.status(400).json({ 'error': err.message })
         }
     }
     async getallUser(req, res) {
@@ -34,7 +34,7 @@ class UserController {
             res.status(200).json({ 'user': user })
         }
         catch (err) {
-            res.status(400).json({ 'message': err.message })
+            res.status(400).json({ 'error': err.message })
         }
     }
     async getUser(req, res) {
@@ -43,7 +43,16 @@ class UserController {
             res.status(200).json({ "user": user })
         }
         catch (err) {
-            res.status(400).json({ 'message': err.message })
+            res.status(400).json({ 'error': err.message })
+        }
+    }
+    async updateUserMeta(req, res) {
+        try {
+            const user = await userService.updateUserMeta(req.body.id, req.body.student_meta_data)
+            res.status(200).json({ "user": user })
+        }
+        catch (err) {
+            res.status(400).json({ 'error': err.message })
         }
     }
 

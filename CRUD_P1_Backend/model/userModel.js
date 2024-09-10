@@ -17,6 +17,10 @@ const User = sequelize.define('user12345', {
     password: {
         type: DataTypes.STRING,
         allowNull: false
+    },
+    student_meta_data: {
+        type: DataTypes.JSONB,
+        allowNull: true,
     }
 })
 

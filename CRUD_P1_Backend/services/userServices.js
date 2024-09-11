@@ -1,5 +1,5 @@
 const { where } = require("sequelize");
-const User = require('../model/userModel')
+const { User, Award } = require('../model/userModel')
 const { Sequelize } = require('sequelize');
 const { Op } = require('sequelize');
 
@@ -22,16 +22,39 @@ class UserService {
         if (user) {
             throw new Error("User already exist")
         }
-        return await User.create(data);
+        const newUser = await User.create(data);
+        if (data.awards) {
+            for (const award of data.awards) {
+                await Award.create({ name: award.name, description: award.description, userId: newUser.id })
+            }
+        }
+        const result = await User.findOne({
+            where: { id: newUser.id },
+            include: [{
+                model: Award, as: 'awards'
+            }]
+        })
+        return result
     }
 
 
 
     async getallUser() {
-        return await User.findAll();
+        return await User.findAll({
+            include: [{
+                model: Award, as: 'awards'
+            }]
+        });
     }
+
     async getUser(id) {
-        const exist = await User.findOne({ where: { id: id } });
+        const exist = await User.findOne({
+            where: { id: id },
+            include: [{
+                model: Award,
+                as: 'awards'
+            }]
+        });
         if (exist) {
             return exist;
         }
@@ -46,6 +69,7 @@ class UserService {
         }
         throw new Error('User not found')
     }
+
     async updateUser(id, data) {
         this.validatePayload(data)
         const exist = await User.findOne({ where: { email: data.email } });
@@ -93,7 +117,12 @@ class UserService {
                 alreadyExist.push(data.email)
                 continue
             }
-            await User.create(data)
+            const createdUser = await User.create(data)
+            if (data.awards) {
+                for (const award of data.awards) {
+                    await Award.create({ name: award.name, description: award.description, userId: createdUser.id })
+                }
+            }
             success.push(data.email)
         }
         return { alreadyExist, success }

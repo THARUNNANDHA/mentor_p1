@@ -1,5 +1,7 @@
 const { where } = require("sequelize");
 const User = require('../model/userModel')
+const { Sequelize } = require('sequelize');
+const { Op } = require('sequelize');
 
 class UserService {
 
@@ -7,7 +9,7 @@ class UserService {
         const namePatten = /^[a-zA-Z\s]{1,50}$/;
         const emailPatten = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/
         const numberPatten = /^(\+91[\-\s]?)?[6-9]\d{9}$/
-        const passwordPatten = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&*!])[a-zA-Z\d!@#$%^&*]{8,}$/
+        const passwordPatten = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&*!()_+])[a-zA-Z\d!@#$%^&*()_+]{8,}$/
         if (!namePatten.test(data.userName)) { throw new Error("invalid Name") }
         if (!numberPatten.test(data.phNumber)) { throw new Error("invalid phone") }
         if (!emailPatten.test(data.email)) { throw new Error("invalid email") }
@@ -77,6 +79,66 @@ class UserService {
         await exist.update({ student_meta_data: currMetadata });
         await exist.save();
         return exist;
+    }
+
+    async bulkInsertUser(datas) {
+        // console.log("data", datas)
+        var alreadyExist = []
+        var success = []
+        for (const data of datas) {
+            this.validatePayload(data)
+            // console.log("email", data.email)
+            const exist = await User.findOne({ where: { email: data.email } })
+            if (exist) {
+                alreadyExist.push(data.email)
+                continue
+            }
+            await User.create(data)
+            success.push(data.email)
+        }
+        return { alreadyExist, success }
+    }
+
+    async bulkInsertUserMetadata(datas) {
+        var userNotFound = []
+        var success = []
+        for (const data of datas) {
+            const exist = await User.findOne({ where: { id: data.id } })
+            if (!exist) {
+                // const temp = [data.id, data.email]
+                userNotFound.push(data.id)
+                continue
+            }
+            var currentMeta = exist.student_meta_data
+            if (data.student_meta_data) {
+                currentMeta = { ...currentMeta, ...data.student_meta_data }
+                await exist.update({ student_meta_data: currentMeta })
+                await exist.save()
+                success.push(data.id)
+            }
+
+        }
+        return { userNotFound, success }
+    }
+    async getTop10Student() {
+        const topStudents = await User.findAll({
+            order: [Sequelize.literal('student_meta_data->>\'marks\' DESC')],
+            limit: 10
+        })
+        return (topStudents)
+    }
+
+    async getTop10StudentByName(nameStr) {
+        const topStudents = await User.findAll({
+            where: {
+                userName: {
+                    [Op.iLike]: `${nameStr}%`,
+                }
+            },
+            order: [Sequelize.literal('student_meta_data->>\'marks\' DESC')],
+            limit: 10
+        })
+        return (topStudents)
     }
 }
 module.exports = new UserService()

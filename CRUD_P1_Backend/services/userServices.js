@@ -39,11 +39,18 @@ class UserService {
 
 
 
-    async getallUser() {
+    async getallUser(page, limit, filter) {
+        // console.log(page, limit, filter)
+
         return await User.findAll({
+            where: {
+                userName: { [Op.iLike]: `${filter}%` }
+            },
             include: [{
                 model: Award, as: 'awards'
-            }]
+            }],
+            limit: limit,
+            offset: (page - 1) * limit
         });
     }
 
@@ -169,5 +176,22 @@ class UserService {
         })
         return (topStudents)
     }
+    async signup(data) {
+        this.validatePayload(data)
+        const user = await User.findOne({ where: { email: data.email } })
+        // console.log(user)
+        if (user) {
+            throw new Error("User already exist")
+        }
+        const newUser = await User.create(data);
+        if (data.awards) {
+            for (const award of data.awards) {
+                await Award.create({ name: award.name, description: award.description, userId: newUser.id })
+            }
+        }
+        return ("successfully signed in")
+    }
 }
+
 module.exports = new UserService()
+

@@ -30,7 +30,11 @@ class UserController {
     }
     async getallUser(req, res) {
         try {
-            const user = await userService.getallUser()
+            const page = parseInt(req.query.page)
+            const limit = parseInt(req.query.limit)
+            const filter = req.query.filter
+            console.log(page, limit, filter)
+            const user = await userService.getallUser(page, limit, filter)
             res.status(200).json({ 'user': user })
         }
         catch (err) {
@@ -92,6 +96,18 @@ class UserController {
         }
         catch (err) {
             res.status(400).json({ 'error': err.message })
+        }
+    }
+    async signup(req, res) {
+        try {
+            // console.log(req.body.data)
+            const result = await userService.signup(req.body.data)
+            console.log(result)
+            res.status(200).json({ "message": result })
+        }
+        catch (err) {
+            console.log(err.message)
+            res.status(200).json({ 'error': err.message })
         }
     }
 
